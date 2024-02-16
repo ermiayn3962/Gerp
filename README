@@ -1,0 +1,255 @@
+/*****************************************************************************
+* Proj4: Gerp
+* Comp 15 Spring 2023
+* README
+* Author: Yodahie Ermias yermia01 and Cooper Golemme cgolemme01
+*****************************************************************************/
+
+Program Purpose:
+---------------
+    The purpose of Gerp is to search through files in a directory and all 
+    subdirectories for particular instances of a word that the user provides. 
+    The program will tell the user the file the word occurs on and what line 
+    number(s) that word occurs. This is meant to model the grep linux command 
+    which does a very similar thing. The difference between grep and our 
+    program, Gerp, is that Gerp uses various data structures outlined in Part
+    G to store all the data from the files in a way that can be efficiently 
+    searched through to find specific words. Grep parses all the files for 
+    each individual query that the user provides. It can also perform case 
+    insensitive or case sensitive search, as well as redirect the output to a 
+    file of the user’s choice rather than displaying to the terminal.
+    
+Acknowledgments:
+---------------
+    Stackoverflow for valgrind debugging
+    Lab 10 for hashing function ideas
+    Office hours for debugging error message related issues
+
+
+Files:
+-----
+    main.cpp
+        Takes in command line inputs, handles errors for improper command
+        line usage,, makes a gerp object which creates the FileObjects and 
+        runs the query.
+    Gerp.h
+        Outlines the functionality of the Gerp class
+    Gerp.cpp
+        Implements the outlined functionality for gerp. Creates the data 
+        structures to store the data from the files and runs the query loop
+    FileObject.cpp
+        Implements the outlined functionality of the FileObject class. 
+        Creates a hash table for each file parsed and stores all string 
+        cases in lists in the buckets of the hash table
+    FileObject.h
+        Outlines the functionality for the FileObject class.
+    HashTable.cpp
+        Implements the outlined functionality for the FileObject class. 
+        Creates various functions required to build a hash table as well 
+        as peruse the contents of it
+    HashTable.h
+        Outlines the functionality for the HashTable class
+    stringProcessing.h
+        Defines a function for parsing strings to strip non alphanumeric 
+        characters
+    stringProcessing.cpp
+        implements the function defined in stringProcessing.h
+    Unit_tests.h
+        Uses the unit testing framework to test the FileObject class and the 
+        HashTable class.
+    inputCommands_test.txt
+        Input file for the gerp program that checks the functionality and 
+        behavior of the query when cin reaches eof.
+    inputCommands_test_1.txt
+        Input file for the gerp program that checks the behavior for every 
+        possible query and ends on eof
+    FileObject_test_file.txt
+        Text file created for the purpose of testing the read_file function 
+        in the FileObject class in the unit_tests.h file
+    FileObject_test_file_2.txt
+        Another text file created for the purpose of testing the read_file 
+        function in the FileObject class in the unit_tests.h file
+
+     
+
+Compiling and Running:
+---------------------
+    Compile: run make command
+    Run: ./gerp [directory to index] [output file]
+
+    
+Architectural Overview:
+----------------------
+    Gerp is the main file in the program which handles the query and stores 
+    a vector of FileObjects that will be searched through when a query is run. 
+    Gerp will write to an output file provided in its constructor, and will 
+    write to a new file if the @f flag is entered.
+
+    FileObject has two main fields: a hash table(described in the Hash section) 
+    and the file path. This object is meant to represent each file in the 
+    directory so that the file path only has to be stored once for each file 
+    rather than for every word in the entire directory.
+
+    Hash is a class that creates a hash table for the program. The hash table 
+    hashes the lowercase version of each word case to a bucket which contains 
+    a list of all cases of the word in the file. The list consists of pairs 
+    of int vectors, which are filled with the line number(s) of all the 
+    occurrences of that particular case of the word in the file, and a string 
+    of the word’s case.
+
+    stringProcessing is a file that parses a word and removes all leading and
+    trailing non alphanumeric characters. This is used in file objects when 
+    the hash table is created, so that only the parsed words are hashed and 
+    stored in the table.
+
+
+Data Structures:
+---------------
+    Hash Table:
+        The main data structure used was a hash table to store the words in 
+        the files. This allows for O(1) access of each word. Rather than 
+        searching through some other data structure, a hash table allows us 
+        to access words very quickly in constant time. For hashing, we used 
+        std::hash to hash a word to an index in an array.
+
+    Linked List:
+        For each word in a file, a linked list stores a pair of values, which 
+        holds the specific case of the word and the line numbers that that 
+        case appears on in an integer vector. A linked list was used here 
+        because adding at the back of the list occurs in O(1) time and does 
+        not require expansion of the list like an array list would. This allows
+        for quick additions to the list when a new occurrence of a word is 
+        found. In theory, this could be very slow if there were many different 
+        cases of each word such as “This,” “this,” “THis,” because the program 
+        iterates over all the different cases of the word. With all possible 
+        permutations, this could be a longer runtime. In practice, there are 
+        usually only two permutations of every word – “This” and “this” – so 
+        the runtime isn't bad in a real world use.
+
+    Array List:
+        An Array List was used for the line numbers that each case of the word 
+        occurs on. This was used because adding at the back occurs in O(1) time
+        and we thought that sometimes we might need to get specific indices of
+        the vector. In the future, we could change this to a linked list to
+        avoid the need to expand the vector when adding at the back because 
+        the benefit of constant time access to indices was never used in the 
+        program.
+
+        An Array List was also used in the main gerp file to store the file 
+        objects. An array list was used here because we wanted a list that 
+        could dynamically change size and could quickly access individual 
+        elements. As previously stated, adding to the back of the array 
+        list is a constant time operation, unless there is a need to expand 
+        the list. In the future, this could be changed to a linked list 
+        because the benefit of accessing individual elements in constant 
+        time was not used outside of testing the program. A linked list 
+        might be better here because there is no need to expand.
+
+
+    
+Algorithms:
+----------
+    Algorithm library: 
+        algorithm’s .find() which searches a vector to find an occurrence of 
+        an element and returns the index of that element in the vector.
+
+
+    Hashing words:
+        To insert new occurrences of words into the hash table, we used 
+        std::hash() which took in the string of the word. We then mod by 
+        the table size to get an index in the range of the table. The 
+        program then accesses the list at that location in the table 
+        and checks if the lowercase version of the word that we are 
+        hashing matches the lowercase version of the first word in the
+        bucket. If it does not match this means that we had a hash 
+        collision and we had to rehash the word until we got an empty
+        bucket to add to. If the bucket we landed on matched the word 
+        that we were trying to add, the program checks if that particular 
+        case of that word exists in that linked list at that bucket in the
+        table. If it does, it adds the line number to the vector, which 
+        is a part of the pair that is in the linked-list. If the case that
+        we are trying to add to does not exist yet, then a new pair is 
+        instantiated with a vector with the line number the word occurs on 
+        and the string of the specific case of the word.
+
+    Calculating load factor of Hash Table:
+        Amount of items / capacity – if this exceeded 70 percent (0.7) 
+        then we would expand the array. This is because the hash function
+        would very likely result in collisions if the load factor exceeded 
+        0.7 and a rehash would be necessary for the performance of the 
+        program.
+
+    Expanding Hash Table:
+        1)  multiplied the current capacity by 2 and added 2
+        2)  created a new array with that new capacity.
+        3)  rehashed all the words in the old array into the new array
+        4)  recycled memory associated with the old array
+
+    Printing occurrences:
+        printoccurances():
+            This function uses the HashTable find function which finds the
+            index of the lowercase key of the word provided in the query. 
+            Then inside that location in the HashTable we iterate over the 
+            linked list to find the specific case of the word that we want 
+            if it is a case sensitive search. Once we find the node in the 
+            linked list for the specific case, we print out the line numbers
+             that the word occurs on as well as the path of the file itself.
+            For a case insensitive search, all the same steps are followed 
+            but instead of printing only a specific instance inside the 
+            HashTable bucket for a word, we print all of the possible 
+            instances of the word. If the word does not exist in the file 
+            that is being searched, then the HashTable find function will 
+            return -1 and the printoccurances() will return a false boolean.
+            If this boolean is false for every file in every directory 
+            then an error message is printed, that the word was not found 
+            and to try with insensitive if a case sensitive search was 
+            performed.
+
+Testing:
+-------
+    Part 1:
+        For phase one of the program, we tested using unit_test.h. We tested
+        FSTreetraversal and stringProcessing by running various test 
+        directories and strings into each function respectively. We tested 
+        edge cases where the parser did not find any nonalphanumeric 
+        characters, and should return a blank string. We tested cases where 
+        there are non alphanumeric values in between two words in the string
+        such as “__Hello_World__” For FSTreeTraversal we made a test 
+        directory to test if our function was working before trying larger
+        directories like smallGutenburg, mediumGutenburg and so on.
+
+    Part 2:
+        For testing of the main Gerp program, we used unit tests on individual
+        parts of the program as we created them. We had many of the private 
+        methods in Gerp public during unit testing. We tested HashTable first.
+        We tested the capacity of it, then created a hash function and tested 
+        that it could map to indices in the table. We created a print HashTable
+        function that was only used for testing of the program and not for any 
+        of the functionality of Gerp. This was used to see that our hashing 
+        worked and mapped property.  We then tested adding a different case 
+        of a word, which should go to the same bucket as all the other cases 
+        of the word and add to the linked list field of that bucket. We then 
+        tested the FileObject class by making FileObject_test_file.txt and 
+        FileObject_test_file_2.txt to test the read_file functionality of the 
+        class and we also made use of the print_table function from the hash 
+        table function to ensure that the hash tables were being created 
+        properly for the test files.
+
+        After unit testing, we started to diff test with the Gerp class and 
+        main.cpp. We tested various edge cases such as when multiple queries 
+        would be processed and found some bugs where our case sensitivity 
+        boolean was not being reset back to true causing gerp to run in 
+        insensitive mode for the rest of the program. We also caught some diff
+        errors with the not found messages being printed incorrectly and not
+        passing diff with the reference gerp program. After passing diff, we 
+        created some files to force input into cin and see how our gerp program
+        would behave. This allowed us to use inputCommands_test.txt and 
+        inputCommands_test_1.txt to check the behavior of the query with 
+        cin.eof() and check all the queries a user can make.
+
+  
+
+Hours Spent:
+-----------
+    Part 1 ~ 3 hrs
+    Part 2 ~ 15 hrs
